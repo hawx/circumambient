@@ -26,11 +26,11 @@ message:
   "method": "...",
   "url": "...",
   "headers": {
-    // ...
+
   },
-  "timestamp": 1397731289, // unix timestamp when request was made
-  "duration": 143314       // duration of request in nanoseconds
+  "timestamp": 1397731289,
+  "duration": 14331
 }
 ```
 
-Call `Circumambient --help` to see all of the options.
+Call `circumambient --help` to see all of the options.
