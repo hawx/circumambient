@@ -36,8 +36,7 @@ func main() {
 			"\n",
 			"    --in <host:port>       # What to route through the proxy\n",
 			"    --out <host:port>      # Where to send proxied traffic\n",
-			"    --redis-port <:port>   # Port of running redis server (default. :6379)\n",
-			"    --redis-pass <value>   # Password for redis server (default. '')\n",
+			"    --redis <:port>   # Port of running redis server (default. :6379)\n",
 		)
 
 		os.Exit(0)
