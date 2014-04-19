@@ -21,6 +21,7 @@ var (
 	in = flag.String("in", "", "")
 	out = flag.String("out", "", "")
 	redisPort = flag.String("redis", ":6379", "")
+	redisChannel = flag.String("channel", "requests", "")
 	help = flag.Bool("help", false, "")
 )
 
@@ -34,9 +35,10 @@ func main() {
 			"  Circumambient provides a simple proxy that publishes details of\n",
 			"  the request to redis.\n",
 			"\n",
-			"    --in <host:port>       # What to route through the proxy\n",
-			"    --out <host:port>      # Where to send proxied traffic\n",
-			"    --redis <:port>   # Port of running redis server (default. :6379)\n",
+			"    --in <host:port>      # What to route through the proxy\n",
+			"    --out <host:port>     # Where to send proxied traffic\n",
+			"    --redis <:port>       # Port of running redis server (default. :6379)\n",
+			"    --channel <name>      # Name of channel to publish to (default: requests)\n",
 		)
 
 		os.Exit(0)
@@ -88,7 +90,7 @@ func publish(start time.Time, duration time.Duration, r *http.Request) {
 	c := pool.Get()
 	defer c.Close()
 
-	err := c.Send("PUBLISH", "requests", string(payload))
+	err := c.Send("PUBLISH", *channel, string(payload))
 	if err != nil {
 		log.Println(err)
 	}
