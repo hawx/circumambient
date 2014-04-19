@@ -90,7 +90,7 @@ func publish(start time.Time, duration time.Duration, r *http.Request) {
 	c := pool.Get()
 	defer c.Close()
 
-	err := c.Send("PUBLISH", *channel, string(payload))
+	err := c.Send("PUBLISH", *redisChannel, string(payload))
 	if err != nil {
 		log.Println(err)
 	}
