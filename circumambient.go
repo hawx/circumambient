@@ -81,7 +81,11 @@ func publish(start time.Time, duration time.Duration, r *http.Request) {
 
 	payload, _ := json.Marshal(Json{
 		"method":    r.Method,
-		"url":       r.URL.String(),
+		"url":       Json{
+			"path":      r.URL.Path,
+			"query":     r.URL.RawQuery,
+			"fragment":  r.URL.Fragment,
+		},
 		"headers":   headers,
 		"timestamp": start.UnixNano(),
 		"duration":  duration.Nanoseconds(),
