@@ -17,13 +17,52 @@ import (
 type Json map[string]interface{}
 
 var (
-	pool *redis.Pool
 	in = flag.String("in", "", "")
 	out = flag.String("out", "", "")
+	console = flag.Bool("console", false, "")
 	redisPort = flag.String("redis", ":6379", "")
 	redisChannel = flag.String("channel", "requests", "")
 	help = flag.Bool("help", false, "")
 )
+
+type Sender interface {
+	Send(payload []byte)
+}
+
+type consoleSender struct {}
+
+func NewConsoleSender() Sender {
+	return &consoleSender{}
+}
+
+func (r *consoleSender) Send(payload []byte) {
+	log.Println(string(payload))
+}
+
+type redisSender struct {
+	pool    *redis.Pool
+	channel string
+}
+
+func NewRedisSender(port, channel string) Sender {
+	return &redisSender{
+	  redis.NewPool(func() (redis.Conn, error) {
+			return redis.Dial("tcp", port)
+		}, 3),
+    channel,
+	}
+}
+
+func (r *redisSender) Send(payload []byte) {
+	c := r.pool.Get()
+	defer c.Close()
+
+	err := c.Send("PUBLISH", r.channel, string(payload))
+	if err != nil {
+		log.Println(err)
+	}
+	c.Flush()
+}
 
 func main() {
 	flag.Parse()
@@ -54,9 +93,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pool = redis.NewPool(func() (redis.Conn, error) {
-		return redis.Dial("tcp", *redisPort)
-	}, 3)
+	sender := NewConsoleSender()
+	if !*console {
+		sender = NewRedisSender(*redisPort, *redisChannel)
+	}
 
 	proxy := httputil.NewSingleHostReverseProxy(remote)
 
@@ -66,14 +106,14 @@ func main() {
 		log.Println(r.Method + " " + r.URL.String())
 		proxy.ServeHTTP(w, r)
 
-		publish(start, time.Since(start), r)
+		publish(sender, start, time.Since(start), r)
 	})
 
 	log.Println("started proxy on " + *in + " to " + *out + "...")
 	log.Fatal(http.ListenAndServe(*in, nil))
 }
 
-func publish(start time.Time, duration time.Duration, r *http.Request) {
+func publish(sender Sender, start time.Time, duration time.Duration, r *http.Request) {
 	headers := Json{}
 	for k, v := range r.Header {
 		headers[k] = strings.Join(v, ", ")
@@ -91,12 +131,5 @@ func publish(start time.Time, duration time.Duration, r *http.Request) {
 		"duration":  duration.Nanoseconds(),
 	})
 
-	c := pool.Get()
-	defer c.Close()
-
-	err := c.Send("PUBLISH", *redisChannel, string(payload))
-	if err != nil {
-		log.Println(err)
-	}
-	c.Flush()
+	sender.Send(payload)
 }
