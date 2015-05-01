@@ -11,7 +11,7 @@ it isn't already running.
 Then,
 
 ``` bash
-$ go get github.com/hawx/circumambient
+$ go get hawx.me/code/circumambient
 $ circumambient --help
 ...
 $ circumambient --in localhost:3002 --out localhost:3001
